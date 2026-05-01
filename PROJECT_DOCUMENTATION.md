@@ -11,6 +11,10 @@ This project predicts future process-water concentrations for selected contamina
 
 The project is based on an Excel workbook originally created by an environmental consultant. That workbook contains a year-by-year water-quality model. The consultant model calculates future concentrations using mine production volumes, ore leaching values, water flows, pit-pump water, and the previous stored process-water concentration.
 
+The consultant's practical question was whether Leveaniemi water and planned ore processing could be used in mining activities while staying within element-specific concentration limits. The current thesis question extends that work: the mine may now use Leveaniemi-Kiruna, LK, with ratios such as 50/50, 40/60, or other mixes that vary over time.
+
+If the element-specific limits are known, they should be entered into the notebook in `ELEMENT_LIMITS`. This allows the forecast plots and exported tables to show whether predicted concentrations approach or exceed the relevant thresholds.
+
 The goal of this codebase is not to blindly copy the consultant's old prediction. The goal is to:
 
 1. Learn how the consultant's model behaves.
@@ -33,6 +37,7 @@ The current project contains:
 | `Leveaniemi_data.xlsx` | Input Excel workbook containing the consultant's original process-water model and supporting sheets. |
 | `requirements.txt` | Python packages needed to run the notebook. |
 | `PROJECT_DOCUMENTATION.md` | This documentation file. |
+| `CONSULTANT_MATHEMATICAL_MODEL.md` | Detailed extraction of the consultant's original mass-balance recurrence and Excel formula logic. |
 
 The notebook expects the Excel workbook to be named:
 
@@ -148,7 +153,7 @@ This is called a recurrence or state-dependent model.
 
 ## 5. The Main Challenge
 
-The consultant originally predicted future water quality using a specific ore-combination assumption. The mine's actual or planned ore combinations have since changed.
+The consultant originally predicted future water quality using a specific ore-combination assumption. In the consultant-style mixes, the workbook uses a fixed 40/60 structure for the helper ore-combination calculations. The mine's actual or planned ore combinations have since changed, and current LK operations may vary between ratios such as 50/50, 40/60, and other schedules.
 
 The thesis question is therefore not just:
 
@@ -399,6 +404,25 @@ This means:
 
 The newest requested scenario is LK, meaning Leveaniemi-Kiruna. The consultant did not directly include LK as its own process-water scenario. The notebook therefore infers an LK proxy from the available Leveaniemi and Kiruna leaching-rate structure already present in the workbook.
 
+Unlike the consultant's fixed-style helper mixes, current LK operation can vary over time. The notebook supports this through:
+
+```python
+TIME_VARYING_ORE_MIX
+```
+
+For example:
+
+```python
+TIME_VARYING_ORE_MIX = pd.DataFrame([
+    {"year": 2026.0, "lk": 1.0, "lk_leveaniemi": 0.50, "lk_kiruna": 0.50},
+    {"year": 2026.5, "lk": 1.0, "lk_leveaniemi": 0.40, "lk_kiruna": 0.60},
+])
+```
+
+This allows the forecast to ask:
+
+> What happens to Cu, NH4, Cl, and Ni concentrations over time under each changing ore combination?
+
 The notebook therefore treats them as:
 
 ```text
@@ -434,6 +458,8 @@ Optional columns:
 | `ore_frac_gk` | Fraction of GK, if relevant |
 | `ore_frac_gl` | Fraction of GL, if relevant |
 | `ore_frac_lk` | Fraction of LK, if relevant |
+| `lk_leveaniemi_frac` | Leveaniemi share within LK, if LK is used |
+| `lk_kiruna_frac` | Kiruna share within LK, if LK is used |
 
 Example structure:
 
@@ -498,6 +524,7 @@ This section defines:
 - Monte Carlo settings
 - Ore scenarios
 - Parameter blocks
+- Optional element-specific concentration limits
 
 Expected result:
 
@@ -529,7 +556,8 @@ This section decides what forecast inputs to use.
 Expected result:
 
 - If `NEW_ORE_INPUTS` is provided, the notebook uses those values.
-- If `NEW_ORE_INPUTS = None`, the notebook uses consultant-proxy GK/GL sensitivity assumptions and an inferred LK proxy.
+- If `TIME_VARYING_ORE_MIX` is provided, the notebook uses a year-by-year or season-by-season proxy ore schedule.
+- If both `NEW_ORE_INPUTS = None` and `TIME_VARYING_ORE_MIX = None`, the notebook uses fixed consultant-proxy GK/GL sensitivity assumptions and an inferred LK proxy.
 
 The displayed table shows the selected ore mix scenario and input mode.
 
@@ -586,7 +614,7 @@ Important columns:
 
 ### 11.7 Proxy Ore-Combination Sensitivity
 
-This section tests different GK, GL, and LK proxy mixes.
+This section tests different GK, GL, and LK proxy mixes. It includes fixed LK examples such as 50/50, 40/60, and 60/40 Leveaniemi-Kiruna.
 
 Expected result:
 
@@ -606,6 +634,7 @@ Expected result:
 - Historical consultant model values.
 - Forecast median line.
 - P10-P90 uncertainty band.
+- Optional horizontal limit lines if `ELEMENT_LIMITS` is filled.
 
 The figure is saved as:
 
@@ -633,6 +662,7 @@ Sheets include:
 | `Forecast_annual` | Forecasts for `.0` annual rows |
 | `Sensitivity_annual` | Annual sensitivity results |
 | `Selected_proxy_mix` | Selected proxy ore-mix scenario |
+| `Element_limits` | Optional element limits used for threshold comparison |
 | `Forecast_input_note` | Important note on whether forecast inputs are proxy or user-supplied |
 
 ### 11.10 Optional Monitoring Data
@@ -690,6 +720,10 @@ The sensitivity table should be used when real future ore inputs are unknown.
 It answers:
 
 > Under different assumed GK/GL/LK mixes, how much do predicted concentrations change?
+
+For the current operational question, the most important interpretation is:
+
+> Under a changing LK schedule, how do Cu, NH4, Cl, and Ni concentrations evolve over time, and do any of them approach or exceed relevant limits?
 
 This is useful for discussion because it shows whether results are stable or highly dependent on ore assumptions.
 

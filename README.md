@@ -11,7 +11,9 @@ The model currently covers:
 
 ## Project Goal
 
-The original consultant model predicted future process-water concentrations using an old ore-combination assumption. This project learns the consultant's calculation logic from the workbook and then allows future predictions under alternative ore-input assumptions.
+The original consultant model predicted future process-water concentrations using an old ore-combination assumption. The consultant's purpose was to check whether Leveaniemi water and planned ore processing could remain within element-specific concentration limits.
+
+This project learns the consultant's calculation logic from the workbook and then allows future predictions under alternative ore-input assumptions. The current operational question is different: the mine may use Leveaniemi-Kiruna, LK, with ratios such as 50/50, 40/60, or other mixes that vary over time. The notebook therefore supports both fixed proxy scenarios and a time-varying ore-mix schedule.
 
 Where confirmed future ore inputs are unavailable, GK/GL/LK forecasts should be interpreted as proxy scenario or sensitivity analysis, not as confirmed operational predictions. LK means Leveaniemi-Kiruna. Because LK was not directly included in the consultant workbook, the notebook infers an LK proxy from the available Leveaniemi and Kiruna leaching-rate structure.
 
@@ -22,6 +24,7 @@ Where confirmed future ore inputs are unavailable, GK/GL/LK forecasts should be 
 | `code.ipynb` | Main notebook for data extraction, model training, forecasting, Monte Carlo simulation, plotting, and Excel export. |
 | `Leveaniemi_data.xlsx` | Input workbook containing the consultant's original process-water model. |
 | `PROJECT_DOCUMENTATION.md` | Detailed explanation of the dataset, modelling choices, assumptions, results, and thesis interpretation. |
+| `CONSULTANT_MATHEMATICAL_MODEL.md` | Extracted explanation of the consultant's original mass-balance recurrence and Excel formulas. |
 | `requirements.txt` | Python dependencies needed to run the notebook. |
 
 ## Setup
@@ -55,9 +58,9 @@ The notebook will:
 1. Read the `Process water` sheet from the Excel workbook.
 2. Extract contaminant blocks for Cu, NH4, Cl, and Ni.
 3. Train Random Forest models to reproduce the consultant's calculated concentrations.
-4. Run sequential forecasts for 2026-2030, including the selected proxy ore-combination scenario.
+4. Run sequential forecasts for 2026-2030, including the selected proxy ore-combination scenario or time-varying ore-mix schedule.
 5. Apply Monte Carlo uncertainty analysis.
-6. Create a four-panel forecast figure.
+6. Create a four-panel forecast figure, with optional element-limit lines if limits are provided.
 7. Export forecast tables to Excel.
 
 ## Outputs
@@ -87,13 +90,15 @@ For final operational prediction, confirmed future ore inputs are needed, especi
 
 If those inputs are unavailable, the results should be presented as scenario-based forecasts or sensitivity analysis.
 
+If element-specific limits are known, enter them in `ELEMENT_LIMITS` in `code.ipynb`. The notebook will add limit lines to the forecast figure and export them to the results workbook.
+
 The default proxy scenario in the notebook is currently:
 
 ```text
-LK100
+LK50_50
 ```
 
-This represents an inferred Leveaniemi-Kiruna sensitivity case, not confirmed operational mine-plan data.
+This represents an inferred 50/50 Leveaniemi-Kiruna sensitivity case, not confirmed operational mine-plan data. To model changing mixes over time, fill `TIME_VARYING_ORE_MIX` in `code.ipynb`.
 
 ## Documentation
 
@@ -101,4 +106,10 @@ For a full explanation of the dataset, code, assumptions, possible thesis questi
 
 ```text
 PROJECT_DOCUMENTATION.md
+```
+
+For the extracted mathematical model used by the consultant, see:
+
+```text
+CONSULTANT_MATHEMATICAL_MODEL.md
 ```
