@@ -52,6 +52,7 @@ config/*.local
 
 # Ignore trained model artifacts and output
 output/
+outputs/
 models/
 artifacts/
 
