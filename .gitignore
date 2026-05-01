@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+.env
+.env.*
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.python-version
+
+# Jupyter
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Data and model artifacts
+*.csv
+*.tsv
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+*.model
+*.ckpt
+*.sav
+
+# Logs
+*.log
+logs/
+
+# System files
+*.swp
+*.swo
+*.tmp
+*.temp
+
+# Ignore local config
+config/*.local
+
+# Ignore trained model artifacts and output
+output/
+models/
+artifacts/
+
+# Ignore environment and secret files
+secrets.yaml
+credentials.json
+
+# Ignore coverage and reports
+.coverage
+htmlcov/
+report/
+
+# Ignore PyCharm
+.idea/
+
+
+.codex
