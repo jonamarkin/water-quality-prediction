@@ -2,12 +2,12 @@
 
 This project supports a master's thesis on process-water quality prediction for the Leveaniemi iron ore mine in northern Sweden. It uses the consultant's original Excel water-balance model in two ways: first as a deterministic consultant-formula model, and second as a machine-learning surrogate model. Both methods can produce LK scenario hindcasts and 2026-2030 forecasts with uncertainty bands.
 
-The model currently covers:
+The model now covers all consultant `Process water` blocks that have final recurrence outputs:
 
-- Cu, copper, in `ug/l`
-- NH4, ammonium, in `mg/l`
-- Cl, chloride, in `mg/l`
-- Ni, nickel, in `ug/l`
+- `Cu`, `Ni`, `Zn`, `Co`, `Mo`, `As`, and `Cr` in `ug/l`
+- `NH4`, `Cl`, `SO4`, `Ca`, `NO3`, and `PO4P` in `mg/l`
+
+Fluoride, `F`, appears in the workbook as an input-style block, but it does not contain the same final `AI` recurrence output, so it is not included as a modelled target.
 
 ## Project Goal
 
@@ -57,13 +57,13 @@ Run the notebook from top to bottom.
 The notebook will:
 
 1. Read the `Process water` sheet from the Excel workbook.
-2. Extract contaminant blocks for Cu, NH4, Cl, and Ni.
+2. Extract all modelled contaminant blocks from the consultant workbook.
 3. Run the deterministic consultant-formula method and check that it reproduces the workbook's GM output.
 4. Train Random Forest models to reproduce the consultant's calculated concentrations.
 5. Load `parameters_used.xlsx` and run a 2020-2025 LK hindcast validation for both methods.
 6. Run sequential forecasts for 2026-2030, including the selected proxy ore-combination scenario or time-varying ore-mix schedule.
 7. Apply Monte Carlo uncertainty analysis.
-8. Create four-panel validation and forecast figures, with optional element-limit lines if limits are provided.
+8. Create multi-panel validation and forecast figures, with optional element-limit lines if limits are provided.
 9. Export forecast and hindcast tables to Excel.
 
 ## Outputs
@@ -78,22 +78,24 @@ Expected files:
 
 | Output | Description |
 |---|---|
-| `leveaniemi_forecast_bands.png` | Four-panel plot with historical model values and forecast uncertainty bands. |
-| `leveaniemi_consultant_formula_forecast_bands.png` | Four-panel forecast plot from the direct deterministic consultant formula. |
+| `leveaniemi_forecast_bands.png` | Multi-panel plot with historical model values and ML forecast uncertainty bands. |
+| `leveaniemi_consultant_formula_forecast_bands.png` | Multi-panel forecast plot from the direct deterministic consultant formula. |
 | `leveaniemi_forecast_values.xlsx` | Excel workbook containing ML diagnostics, deterministic-formula checks, forecasts, sensitivity results, and input notes. |
-| `leveaniemi_hindcast_validation_consultant_formula_2020_2025.png` | Four-panel plot comparing deterministic consultant-formula LK hindcast predictions with observed seasonal concentrations. |
-| `leveaniemi_hindcast_validation_ml_2020_2025.png` | Four-panel plot comparing ML LK hindcast predictions with observed seasonal concentrations. |
+| `leveaniemi_hindcast_validation_consultant_formula_2020_2025.png` | Multi-panel plot comparing deterministic consultant-formula LK hindcast predictions with observed seasonal concentrations. |
+| `leveaniemi_hindcast_validation_ml_2020_2025.png` | Multi-panel plot comparing ML LK hindcast predictions with observed seasonal concentrations. |
 | `leveaniemi_hindcast_validation_2020_2025.xlsx` | Excel workbook containing LK mix schedule, observed data, deterministic and ML hindcast predictions, and error metrics. |
 
 ## Important Modelling Note
 
 The deterministic formula reproduces the consultant workbook logic directly. The machine-learning model learns that same logic as a surrogate. Neither method automatically proves that the consultant model matches real monitoring data; that is why the 2020-2025 hindcast validation section is included.
 
+Only the 2020-2025 data from `parameters_used.xlsx` is treated as actual observed monitoring data. Rows before 2020 in the consultant workbook are model/formula rows, not actual observations; they are used only to reconstruct or learn the consultant recurrence and to seed sequential predictions.
+
 For final operational prediction, confirmed future ore inputs are needed, especially:
 
 - production volume
 - ore mix
-- process-leaching values for Cu, NH4, Cl, and Ni
+- process-leaching values for each modelled parameter
 
 If those inputs are unavailable, the results should be presented as scenario-based forecasts or sensitivity analysis.
 

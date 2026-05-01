@@ -2,12 +2,12 @@
 
 ## 1. Plain-Language Summary
 
-This project predicts future process-water concentrations for selected contaminants at the Leveaniemi iron ore mine. The contaminants currently modelled are:
+This project predicts future process-water concentrations for selected contaminants at the Leveaniemi iron ore mine. The notebook now models all consultant `Process water` blocks that contain final recurrence outputs:
 
-- Copper, `Cu`, in `ug/l`
-- Ammonium, `NH4`, in `mg/l`
-- Chloride, `Cl`, in `mg/l`
-- Nickel, `Ni`, in `ug/l`
+- `Cu`, `Ni`, `Zn`, `Co`, `Mo`, `As`, and `Cr` in `ug/l`
+- `NH4`, `Cl`, `SO4`, `Ca`, `NO3`, and `PO4P` in `mg/l`
+
+Fluoride, `F`, appears in the workbook as an input-style block, but it does not contain the same final `AI` recurrence output, so it is not included as a modelled target.
 
 The project is based on an Excel workbook originally created by an environmental consultant. That workbook contains a year-by-year water-quality model. The consultant model calculates future concentrations using mine production volumes, ore leaching values, water flows, pit-pump water, and the previous stored process-water concentration.
 
@@ -27,6 +27,8 @@ The goal of this codebase is not to blindly copy the consultant's old prediction
 The most important thing to understand is this:
 
 > The deterministic formula and machine-learning model can both reproduce the consultant's calculation pattern, but both still need assumptions about future ore production and leaching. If confirmed future ore inputs are unavailable, the output should be interpreted as scenario-based or sensitivity-based prediction, not as a confirmed operational forecast.
+
+The only data treated as actual observed monitoring data is the 2020-2025 data in `parameters_used.xlsx`. Pre-2020 rows in the consultant workbook are not treated as observations; they are consultant model/formula rows used only to reconstruct or learn the consultant recurrence and to seed sequential predictions.
 
 ## 2. Files in This Project
 
@@ -85,7 +87,7 @@ That sheet contains the process-water mass-balance calculations for each contami
 
 ### 3.2 Process Water Sheet Structure
 
-Each contaminant has its own block inside the `Process water` sheet. The notebook extracts four blocks:
+Each contaminant has its own block inside the `Process water` sheet. The notebook extracts the modelled blocks that have final recurrence outputs:
 
 | Parameter | Unit | First Excel Data Row Used |
 |---|---:|---:|
@@ -93,6 +95,15 @@ Each contaminant has its own block inside the `Process water` sheet. The noteboo
 | `NH4` | `mg/l` | 82 |
 | `Cl` | `mg/l` | 122 |
 | `Ni` | `ug/l` | 161 |
+| `Zn` | `ug/l` | 200 |
+| `Co` | `ug/l` | 240 |
+| `Mo` | `ug/l` | 279 |
+| `SO4` | `mg/l` | 321 |
+| `Ca` | `mg/l` | 361 |
+| `NO3` | `mg/l` | 397 |
+| `PO4P` | `mg/l` | 433 |
+| `As` | `ug/l` | 507 |
+| `Cr` | `ug/l` | 544 |
 
 The data uses half-year rows:
 
@@ -306,12 +317,7 @@ The notebook uses a hybrid of:
 
 ### Step 1: Extract Consultant Rows
 
-The notebook reads the `Process water` sheet and extracts rows for:
-
-- Cu
-- NH4
-- Cl
-- Ni
+The notebook reads the `Process water` sheet and extracts rows for all modelled parameters listed in `PARAM_BLOCKS`, including the original four focus parameters and the additional blocks such as Zn, Co, Mo, SO4, Ca, NO3, PO4P, As, and Cr.
 
 It uses the consultant's calculated rows from 2014 to 2025 as the source data. The deterministic formula section uses these rows to check whether the Python recurrence reproduces the workbook, while the ML section uses them for training.
 
@@ -350,9 +356,9 @@ The notebook trains one model per contaminant.
 
 This is important because the contaminants have very different scales. For example:
 
-- Cu and Ni are in `ug/l`
-- NH4 and Cl are in `mg/l`
-- Cl leaching values can be very large compared with Cu and Ni
+- Several metals are in `ug/l`
+- NH4, Cl, SO4, Ca, NO3, and PO4P are in `mg/l`
+- Some leaching values, especially mg/kg-style blocks such as Cl and SO4, can be very large compared with metal blocks
 
 Training separately avoids one parameter dominating another.
 
@@ -442,7 +448,7 @@ TIME_VARYING_ORE_MIX = pd.DataFrame([
 
 This allows the forecast to ask:
 
-> What happens to Cu, NH4, Cl, and Ni concentrations over time under each changing ore combination?
+> What happens to each modelled process-water parameter over time under each changing ore combination?
 
 The notebook therefore treats them as:
 
@@ -466,7 +472,7 @@ The required columns are:
 
 | Column | Meaning |
 |---|---|
-| `parameter` | `Cu`, `NH4`, `Cl`, or `Ni` |
+| `parameter` | Any modelled parameter in `PARAM_BLOCKS`, for example `Cu`, `NH4`, `Cl`, `Ni`, `Zn`, `SO4`, or `As` |
 | `year` | Half-year row, for example `2026.0` or `2026.5` |
 | `production_mton` | Production volume for that row |
 | `process_leach` | Process-leaching input for that parameter and row |
@@ -502,7 +508,7 @@ If speaking to the thesis owner, use simple language:
 
 More specific:
 
-> For each parameter, Cu, NH4, Cl, and Ni, do we have planned production volume and leaching input for each year or half-year from 2026 to 2030?
+> For each modelled parameter, do we have planned production volume and leaching input for each year or half-year from 2026 to 2030?
 
 If not:
 
@@ -663,11 +669,11 @@ Use this to answer:
 
 ### 11.9 Thesis Figure
 
-This section creates a four-panel figure.
+This section creates a multi-panel figure.
 
 Expected result:
 
-- One panel each for Cu, NH4, Cl, and Ni.
+- One panel for each modelled parameter.
 - Historical consultant model values.
 - Forecast median line.
 - P10-P90 uncertainty band.
@@ -760,7 +766,7 @@ It answers:
 
 For the current operational question, the most important interpretation is:
 
-> Under a changing LK schedule, how do Cu, NH4, Cl, and Ni concentrations evolve over time, and do any of them approach or exceed relevant limits?
+> Under a changing LK schedule, how do the modelled concentrations evolve over time, and do any of them approach or exceed relevant limits?
 
 This is useful for discussion because it shows whether results are stable or highly dependent on ore assumptions.
 
@@ -836,7 +842,7 @@ Needed data:
 
 - Future production volume by year or half-year
 - Future ore mix
-- Future leaching values for Cu, NH4, Cl, and Ni
+- Future leaching values for each modelled parameter
 
 With this, the forecast becomes much more defensible.
 
