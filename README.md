@@ -13,7 +13,7 @@ The model currently covers:
 
 The original consultant model predicted future process-water concentrations using an old ore-combination assumption. This project learns the consultant's calculation logic from the workbook and then allows future predictions under alternative ore-input assumptions.
 
-Where confirmed future ore inputs are unavailable, GK/GL forecasts should be interpreted as proxy scenario or sensitivity analysis, not as confirmed operational predictions.
+Where confirmed future ore inputs are unavailable, GK/GL/LK forecasts should be interpreted as proxy scenario or sensitivity analysis, not as confirmed operational predictions. LK means Leveaniemi-Kiruna. Because LK was not directly included in the consultant workbook, the notebook infers an LK proxy from the available Leveaniemi and Kiruna leaching-rate structure.
 
 ## Repository Contents
 
@@ -55,7 +55,7 @@ The notebook will:
 1. Read the `Process water` sheet from the Excel workbook.
 2. Extract contaminant blocks for Cu, NH4, Cl, and Ni.
 3. Train Random Forest models to reproduce the consultant's calculated concentrations.
-4. Run sequential forecasts for 2026-2030.
+4. Run sequential forecasts for 2026-2030, including the selected proxy ore-combination scenario.
 5. Apply Monte Carlo uncertainty analysis.
 6. Create a four-panel forecast figure.
 7. Export forecast tables to Excel.
@@ -86,6 +86,14 @@ For final operational prediction, confirmed future ore inputs are needed, especi
 - process-leaching values for Cu, NH4, Cl, and Ni
 
 If those inputs are unavailable, the results should be presented as scenario-based forecasts or sensitivity analysis.
+
+The default proxy scenario in the notebook is currently:
+
+```text
+LK100
+```
+
+This represents an inferred Leveaniemi-Kiruna sensitivity case, not confirmed operational mine-plan data.
 
 ## Documentation
 

@@ -287,7 +287,7 @@ The notebook uses a hybrid of:
 - Random Forest surrogate modelling
 - Sequential recurrence forecasting
 - Monte Carlo uncertainty simulation
-- GK/GL sensitivity analysis
+- GK/GL/LK proxy sensitivity analysis
 
 ### Step 1: Extract Consultant Rows
 
@@ -389,13 +389,15 @@ The output gives:
 - `P50`: median forecast
 - `P90`: upper uncertainty bound
 
-## 8. Important Note About GK and GL Values
+## 8. Important Note About GK, GL, and LK Values
 
 Recent feedback says that the GK and GL values inside the consultant workbook are also consultant predictions or visualized scenario values.
 
 This means:
 
 > They are not confirmed current or future mine-plan truth.
+
+The newest requested scenario is LK, meaning Leveaniemi-Kiruna. The consultant did not directly include LK as its own process-water scenario. The notebook therefore infers an LK proxy from the available Leveaniemi and Kiruna leaching-rate structure already present in the workbook.
 
 The notebook therefore treats them as:
 
@@ -405,11 +407,11 @@ consultant_proxy_sensitivity
 
 not as confirmed future data.
 
-If real future ore inputs are unavailable, it is acceptable to use the workbook GK/GL values as proxy assumptions, but the thesis must describe the output as scenario-based or sensitivity-based.
+If real future ore inputs are unavailable, it is acceptable to use the workbook GK/GL values and inferred LK values as proxy assumptions, but the thesis must describe the output as scenario-based or sensitivity-based.
 
 Suggested thesis wording:
 
-> Because confirmed updated ore-plan inputs were unavailable, future predictions were generated using proxy GK/GL scenarios inferred from the consultant workbook. These results should be interpreted as scenario-based forecasts rather than confirmed operational predictions.
+> Because confirmed updated ore-plan inputs were unavailable, future predictions were generated using proxy GK/GL scenarios and an inferred LK scenario from the consultant workbook structure. These results should be interpreted as scenario-based forecasts rather than confirmed operational predictions.
 
 ## 9. What New Ore Inputs Would Look Like
 
@@ -431,14 +433,15 @@ Optional columns:
 | `ore_frac_gm` | Fraction of GM, if relevant |
 | `ore_frac_gk` | Fraction of GK, if relevant |
 | `ore_frac_gl` | Fraction of GL, if relevant |
+| `ore_frac_lk` | Fraction of LK, if relevant |
 
 Example structure:
 
 ```python
 NEW_ORE_INPUTS = [
-    {"parameter": "Cu", "year": 2026.0, "production_mton": 2.1, "process_leach": 18.5, "ore_frac_gk": 0.6, "ore_frac_gl": 0.4},
-    {"parameter": "Cu", "year": 2026.5, "production_mton": 3.2, "process_leach": 30.0, "ore_frac_gk": 0.6, "ore_frac_gl": 0.4},
-    {"parameter": "NH4", "year": 2026.0, "production_mton": 2.1, "process_leach": 1200.0, "ore_frac_gk": 0.6, "ore_frac_gl": 0.4},
+    {"parameter": "Cu", "year": 2026.0, "production_mton": 2.1, "process_leach": 18.5, "ore_frac_lk": 1.0},
+    {"parameter": "Cu", "year": 2026.5, "production_mton": 3.2, "process_leach": 30.0, "ore_frac_lk": 1.0},
+    {"parameter": "NH4", "year": 2026.0, "production_mton": 2.1, "process_leach": 1200.0, "ore_frac_lk": 1.0},
 ]
 ```
 
@@ -456,7 +459,7 @@ More specific:
 
 If not:
 
-> Is it acceptable to use the workbook GK/GL values as proxy scenarios and present the result as sensitivity analysis rather than a confirmed forecast?
+> Is it acceptable to use the workbook GK/GL values and an inferred LK value as proxy scenarios and present the result as sensitivity analysis rather than a confirmed forecast?
 
 ## 11. Notebook Sections and What to Expect
 
@@ -526,7 +529,7 @@ This section decides what forecast inputs to use.
 Expected result:
 
 - If `NEW_ORE_INPUTS` is provided, the notebook uses those values.
-- If `NEW_ORE_INPUTS = None`, the notebook uses consultant-proxy GK/GL sensitivity assumptions.
+- If `NEW_ORE_INPUTS = None`, the notebook uses consultant-proxy GK/GL sensitivity assumptions and an inferred LK proxy.
 
 The displayed table shows the selected ore mix scenario and input mode.
 
@@ -581,9 +584,9 @@ Important columns:
 | `p90` | Upper uncertainty estimate |
 | `input_mode` | Whether forecast used real ore inputs or proxy sensitivity inputs |
 
-### 11.7 GK/GL Sensitivity
+### 11.7 Proxy Ore-Combination Sensitivity
 
-This section tests different GK/GL mixes.
+This section tests different GK, GL, and LK proxy mixes.
 
 Expected result:
 
@@ -686,7 +689,7 @@ The sensitivity table should be used when real future ore inputs are unknown.
 
 It answers:
 
-> Under different assumed GK/GL mixes, how much do predicted concentrations change?
+> Under different assumed GK/GL/LK mixes, how much do predicted concentrations change?
 
 This is useful for discussion because it shows whether results are stable or highly dependent on ore assumptions.
 
@@ -716,11 +719,11 @@ Answer:
 
 > Yes, but only as a scenario or sensitivity forecast. We can use inferred or proxy values from the workbook and clearly state that the results are conditional on those assumptions.
 
-### Question 5: Are the workbook GK/GL values actual updated mine data?
+### Question 5: Are the workbook GK/GL/LK values actual updated mine data?
 
 Answer:
 
-> Based on feedback, no. They are consultant-derived scenario/proxy values. They can be useful for sensitivity analysis but should not be presented as confirmed future mine-plan values.
+> Based on feedback, no. GK and GL are consultant-derived scenario/proxy values. LK was not directly included by the consultant and is inferred from the available Leveaniemi and Kiruna rates. These values can be useful for sensitivity analysis but should not be presented as confirmed future mine-plan values.
 
 ### Question 6: What does a high CV R2 mean?
 
@@ -847,7 +850,7 @@ This helps justify why Random Forest was selected.
 
 A safe and accurate way to describe the work is:
 
-> This study developed a machine-learning surrogate of the consultant's process-water mass-balance model for Leveaniemi. The model was trained on consultant-calculated rows from 2014-2025 and used previous storage concentration, production volume, leaching inputs, pit-pump water, and water-balance variables as predictors. Forecasts for 2026-2030 were generated sequentially so that each predicted concentration was fed into the next row as the storage state. Uncertainty was quantified using Monte Carlo perturbation of leaching inputs. Where confirmed future ore-plan inputs were unavailable, GK/GL forecasts were treated as proxy scenario and sensitivity results rather than confirmed operational predictions.
+> This study developed a machine-learning surrogate of the consultant's process-water mass-balance model for Leveaniemi. The model was trained on consultant-calculated rows from 2014-2025 and used previous storage concentration, production volume, leaching inputs, pit-pump water, and water-balance variables as predictors. Forecasts for 2026-2030 were generated sequentially so that each predicted concentration was fed into the next row as the storage state. Uncertainty was quantified using Monte Carlo perturbation of leaching inputs. Where confirmed future ore-plan inputs were unavailable, GK/GL forecasts and the inferred LK forecast were treated as proxy scenario and sensitivity results rather than confirmed operational predictions.
 
 ## 16. Practical Checklist Before Presenting Results
 
@@ -879,5 +882,4 @@ Its strongest current use is:
 
 Its strongest future improvement is:
 
-> Replace proxy GK/GL assumptions with confirmed future ore production and leaching inputs, then compare predictions against monitoring data.
-
+> Replace proxy GK/GL/LK assumptions with confirmed future ore production and leaching inputs, then compare predictions against monitoring data.
