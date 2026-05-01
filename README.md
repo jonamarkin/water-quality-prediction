@@ -21,7 +21,7 @@ Where confirmed future ore inputs are unavailable, GK/GL/LK forecasts should be 
 
 | File | Description |
 |---|---|
-| `code.ipynb` | Main notebook for data extraction, deterministic formula modelling, ML model training, 2020-2025 hindcast validation, forecasting, Monte Carlo simulation, plotting, and Excel export. |
+| `code.ipynb` | Main notebook. It is split into Method 1, deterministic consultant formula, and optional Method 2, ML surrogate. Method 1 can be run and exported without running any ML cells. |
 | `Leveaniemi_data.xlsx` | Input workbook containing the consultant's original process-water model. |
 | `parameters_used.xlsx` | New workbook containing 2020-2025 observed/seasonal data, LK ore-mix ratios, production references, and validation inputs. |
 | `PROJECT_DOCUMENTATION.md` | Detailed explanation of the dataset, modelling choices, assumptions, results, and thesis interpretation. |
@@ -36,10 +36,16 @@ Install the required Python packages:
 pip install -r requirements.txt
 ```
 
-If running in Google Colab, install packages inside the notebook:
+If running in Google Colab and you only want Method 1, install:
 
 ```python
-%pip install pandas openpyxl scikit-learn matplotlib xlsxwriter
+%pip install pandas numpy openpyxl matplotlib xlsxwriter
+```
+
+If you also want the optional ML method, install:
+
+```python
+%pip install scikit-learn
 ```
 
 Then upload `Leveaniemi_data.xlsx` and `parameters_used.xlsx` to the Colab runtime or place them in Google Drive.
@@ -52,19 +58,26 @@ Open and run:
 code.ipynb
 ```
 
-Run the notebook from top to bottom.
+Run the notebook from the top through **Method 1 Hindcast Validation and Export** if you only want the consultant-formula approach. Stop there if you do not want any ML results.
 
-The notebook will:
+Method 1 will:
 
 1. Read the `Process water` sheet from the Excel workbook.
 2. Extract all modelled contaminant blocks from the consultant workbook.
 3. Run the deterministic consultant-formula method and check that it reproduces the workbook's GM output.
-4. Train Random Forest models to reproduce the consultant's calculated concentrations.
-5. Load `parameters_used.xlsx` and run a 2020-2025 LK hindcast validation for both methods.
-6. Run sequential forecasts for 2026-2030, including the selected proxy ore-combination scenario or time-varying ore-mix schedule.
-7. Apply Monte Carlo uncertainty analysis.
-8. Create multi-panel validation and forecast figures, with optional element-limit lines if limits are provided.
-9. Export forecast and hindcast tables to Excel.
+4. Run a deterministic 2026-2030 forecast.
+5. Load `parameters_used.xlsx`.
+6. Run a 2020-2025 LK hindcast validation against actual observed data.
+7. Create Method 1 forecast and validation figures.
+8. Export the Method 1 workbook.
+
+The optional Method 2 section then:
+
+1. Imports `scikit-learn`.
+2. Trains Random Forest models to reproduce the consultant's calculated concentrations.
+3. Runs the ML 2026-2030 forecast and sensitivity analysis.
+4. Runs the ML 2020-2025 hindcast validation.
+5. Exports ML and combined comparison workbooks.
 
 ## Outputs
 
@@ -78,12 +91,13 @@ Expected files:
 
 | Output | Description |
 |---|---|
-| `leveaniemi_forecast_bands.png` | Multi-panel plot with historical model values and ML forecast uncertainty bands. |
 | `leveaniemi_consultant_formula_forecast_bands.png` | Multi-panel forecast plot from the direct deterministic consultant formula. |
-| `leveaniemi_forecast_values.xlsx` | Excel workbook containing ML diagnostics, deterministic-formula checks, forecasts, sensitivity results, and input notes. |
 | `leveaniemi_hindcast_validation_consultant_formula_2020_2025.png` | Multi-panel plot comparing deterministic consultant-formula LK hindcast predictions with observed seasonal concentrations. |
+| `leveaniemi_method1_consultant_formula_outputs.xlsx` | Complete Method 1 workbook with formula reproduction checks, forecast values, observed 2020-2025 data, formula hindcast values, and error metrics. |
+| `leveaniemi_forecast_bands.png` | Optional Method 2 multi-panel plot with historical model values and ML forecast uncertainty bands. |
+| `leveaniemi_method2_ml_outputs.xlsx` | Optional Method 2 workbook containing ML diagnostics, ML forecasts, sensitivity results, formula forecast references, and input notes. |
 | `leveaniemi_hindcast_validation_ml_2020_2025.png` | Multi-panel plot comparing ML LK hindcast predictions with observed seasonal concentrations. |
-| `leveaniemi_hindcast_validation_2020_2025.xlsx` | Excel workbook containing LK mix schedule, observed data, deterministic and ML hindcast predictions, and error metrics. |
+| `leveaniemi_hindcast_validation_2020_2025.xlsx` | Optional combined workbook containing LK mix schedule, observed data, deterministic and ML hindcast predictions, and side-by-side error metrics. |
 
 ## Important Modelling Note
 

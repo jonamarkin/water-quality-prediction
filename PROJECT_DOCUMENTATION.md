@@ -19,7 +19,7 @@ The goal of this codebase is not to blindly copy the consultant's old prediction
 
 1. Learn how the consultant's model behaves.
 2. Reproduce that behaviour directly using the consultant's deterministic formula.
-3. Reproduce that behaviour using a machine-learning surrogate.
+3. Optionally reproduce that behaviour using a machine-learning surrogate.
 4. Run future forecasts under new or alternative ore-input assumptions.
 5. Quantify uncertainty using Monte Carlo simulation.
 6. Produce thesis-ready figures and Excel tables.
@@ -36,7 +36,7 @@ The current project contains:
 
 | File | Purpose |
 |---|---|
-| `code.ipynb` | Main Jupyter notebook. It reads the Excel workbook, runs the deterministic formula method, trains ML models, runs forecasts, creates plots, and exports results. |
+| `code.ipynb` | Main Jupyter notebook. It is ordered so Method 1, the deterministic consultant-formula approach, runs and exports first. Method 2, the ML surrogate, is optional and comes later. |
 | `Leveaniemi_data.xlsx` | Input Excel workbook containing the consultant's original process-water model and supporting sheets. |
 | `parameters_used.xlsx` | New validation workbook containing 2020-2025 observed/seasonal data, LK mix ratios, production references, and supporting parameters. |
 | `requirements.txt` | Python packages needed to run the notebook. |
@@ -525,13 +525,12 @@ Expected result:
 - If packages are installed, it runs silently.
 - If packages are missing, it tells you to install them.
 
-Required packages are:
+Method 1 requires:
 
 ```text
 pandas
 numpy
 openpyxl
-scikit-learn
 matplotlib
 xlsxwriter
 ```
@@ -539,7 +538,19 @@ xlsxwriter
 In Colab or Jupyter, install with:
 
 ```python
-%pip install pandas openpyxl scikit-learn matplotlib xlsxwriter
+%pip install pandas numpy openpyxl matplotlib xlsxwriter
+```
+
+Optional Method 2 also requires:
+
+```text
+scikit-learn
+```
+
+Install it only if you want to run the ML section:
+
+```python
+%pip install scikit-learn
 ```
 
 ### 11.2 Project Configuration
@@ -604,7 +615,39 @@ Important interpretation:
 
 For the workbook-reproduction check, the code uses the workbook's own `AF` storage-state column so it can verify the Excel calculation accurately. For hindcast and future forecast, the same formula is then run sequentially, meaning each predicted concentration becomes the next storage state.
 
-### 11.6 Model Training and Diagnostics
+### 11.6 2020-2025 Actual Data and LK Schedule
+
+This section loads `parameters_used.xlsx`.
+
+Expected result:
+
+- A table of the LK mix schedule for 2020-2025.
+- A table of observed concentrations from the `DECIMAL DATE` sheet.
+- A production reference table.
+
+Important interpretation:
+
+> Only 2020-2025 from `parameters_used.xlsx` is treated as actual observed monitoring data. Pre-2020 consultant workbook rows are not actual observations.
+
+### 11.7 Method 1 Hindcast Validation and Export
+
+This section completes the non-ML consultant-formula method.
+
+Expected result:
+
+- A table of error metrics comparing formula predictions with observed 2020-2025 data.
+- A validation chart where the model prediction and actual observed data are shown as separate lines.
+- A Method 1 Excel workbook.
+
+The Method 1 workbook is saved as:
+
+```text
+outputs/leveaniemi_method1_consultant_formula_outputs.xlsx
+```
+
+This is the point where you can stop if you do not want to run machine learning.
+
+### 11.8 Optional Method 2: Model Training and Diagnostics
 
 This section trains the Random Forest models.
 
@@ -637,7 +680,7 @@ CV R2 < 0.5
 
 If a parameter has weak R2, interpret its forecast carefully.
 
-### 11.7 Sequential Forecast and Monte Carlo
+### 11.9 Optional Method 2: Sequential Forecast and Monte Carlo
 
 This section predicts 2026-2030.
 
@@ -655,7 +698,7 @@ Important columns:
 | `p90` | Upper uncertainty estimate |
 | `input_mode` | Whether forecast used real ore inputs or proxy sensitivity inputs |
 
-### 11.8 Proxy Ore-Combination Sensitivity
+### 11.10 Optional Method 2: Proxy Ore-Combination Sensitivity
 
 This section tests different GK, GL, and LK proxy mixes. It includes fixed LK examples such as 50/50, 40/60, and 60/40 Leveaniemi-Kiruna.
 
@@ -667,7 +710,7 @@ Use this to answer:
 
 > How much does the prediction change if the future ore mix is more GK-heavy or more GL-heavy?
 
-### 11.9 Thesis Figure
+### 11.11 Optional Method 2: ML Forecast Figure
 
 This section creates a multi-panel figure.
 
@@ -685,34 +728,49 @@ The figure is saved as:
 outputs/leveaniemi_forecast_bands.png
 ```
 
-### 11.9 Excel Export
+### 11.12 Optional Method 2: ML Forecast Export
 
 This section writes the output tables to Excel.
 
 Expected result:
 
 ```text
-outputs/leveaniemi_forecast_values.xlsx
+outputs/leveaniemi_method2_ml_outputs.xlsx
 ```
 
 Sheets include:
 
 | Sheet | Meaning |
 |---|---|
-| `Diagnostics` | Model fit statistics |
-| `CV_predictions` | Cross-validation predictions versus consultant values |
-| `Forecast_half_year` | Forecasts for all half-year rows |
-| `Forecast_annual` | Forecasts for `.0` annual rows |
-| `Sensitivity_annual` | Annual sensitivity results |
+| `ML_diagnostics` | Model fit statistics |
+| `ML_CV_predictions` | Cross-validation predictions versus consultant values |
+| `ML_forecast_half_year` | ML forecasts for all half-year rows |
+| `ML_forecast_annual` | ML forecasts for `.0` annual rows |
+| `ML_sensitivity_annual` | Annual sensitivity results |
 | `Selected_proxy_mix` | Selected proxy ore-mix scenario |
 | `Element_limits` | Optional element limits used for threshold comparison |
 | `Forecast_input_note` | Important note on whether forecast inputs are proxy or user-supplied |
 
-### 11.10 Optional Monitoring Data
+### 11.13 Optional Monitoring Data
 
 This section is only a scaffold.
 
 It can later be used to compare model forecasts with daily monitoring data.
+
+### 11.14 Optional Method 2: ML Hindcast Validation
+
+This section repeats the 2020-2025 validation with the Random Forest surrogate.
+
+Expected result:
+
+- A validation chart where the ML hindcast and actual observed data are shown as separate lines.
+- A combined workbook comparing Method 1 and Method 2 side by side.
+
+The combined workbook is saved as:
+
+```text
+outputs/leveaniemi_hindcast_validation_2020_2025.xlsx
+```
 
 ## 12. How to Interpret the Results
 
