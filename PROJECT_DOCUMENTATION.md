@@ -18,14 +18,15 @@ If the element-specific limits are known, they should be entered into the notebo
 The goal of this codebase is not to blindly copy the consultant's old prediction. The goal is to:
 
 1. Learn how the consultant's model behaves.
-2. Reproduce that behaviour using a machine-learning surrogate.
-3. Run future forecasts under new or alternative ore-input assumptions.
-4. Quantify uncertainty using Monte Carlo simulation.
-5. Produce thesis-ready figures and Excel tables.
+2. Reproduce that behaviour directly using the consultant's deterministic formula.
+3. Reproduce that behaviour using a machine-learning surrogate.
+4. Run future forecasts under new or alternative ore-input assumptions.
+5. Quantify uncertainty using Monte Carlo simulation.
+6. Produce thesis-ready figures and Excel tables.
 
 The most important thing to understand is this:
 
-> The machine-learning model can learn the calculation pattern, but it still needs assumptions about future ore production and leaching. If confirmed future ore inputs are unavailable, the output should be interpreted as scenario-based or sensitivity-based prediction, not as a confirmed operational forecast.
+> The deterministic formula and machine-learning model can both reproduce the consultant's calculation pattern, but both still need assumptions about future ore production and leaching. If confirmed future ore inputs are unavailable, the output should be interpreted as scenario-based or sensitivity-based prediction, not as a confirmed operational forecast.
 
 ## 2. Files in This Project
 
@@ -33,19 +34,26 @@ The current project contains:
 
 | File | Purpose |
 |---|---|
-| `code.ipynb` | Main Jupyter notebook. It reads the Excel workbook, trains models, runs forecasts, creates plots, and exports results. |
+| `code.ipynb` | Main Jupyter notebook. It reads the Excel workbook, runs the deterministic formula method, trains ML models, runs forecasts, creates plots, and exports results. |
 | `Leveaniemi_data.xlsx` | Input Excel workbook containing the consultant's original process-water model and supporting sheets. |
+| `parameters_used.xlsx` | New validation workbook containing 2020-2025 observed/seasonal data, LK mix ratios, production references, and supporting parameters. |
 | `requirements.txt` | Python packages needed to run the notebook. |
 | `PROJECT_DOCUMENTATION.md` | This documentation file. |
 | `CONSULTANT_MATHEMATICAL_MODEL.md` | Detailed extraction of the consultant's original mass-balance recurrence and Excel formula logic. |
 
-The notebook expects the Excel workbook to be named:
+The notebook expects the main Excel workbook to be named:
 
 ```text
 Leveaniemi_data.xlsx
 ```
 
-If running in Google Colab, the file must be uploaded into the Colab runtime or placed in Google Drive.
+For the 2020-2025 validation section, it also expects:
+
+```text
+parameters_used.xlsx
+```
+
+If running in Google Colab, both files must be uploaded into the Colab runtime or placed in Google Drive.
 
 ## 3. Dataset Explanation
 
@@ -177,15 +185,16 @@ If those values are not known, the thesis can still produce useful scenario or s
 
 There are several reasonable approaches to this problem.
 
-### Approach 1: Rebuild the Consultant Formula Exactly
+### Approach 1: Deterministic Consultant Formula Model
 
-This means manually translating every Excel formula into Python.
+This means translating the key Excel recurrence into Python and running it directly as a prediction model.
 
 Advantages:
 
 - Most transparent.
 - Closest to the original model.
 - Good for auditing the consultant workbook.
+- Produces an independent, non-ML baseline.
 
 Disadvantages:
 
@@ -193,11 +202,11 @@ Disadvantages:
 - Easy to make mistakes because Excel formulas differ by row and contaminant.
 - Less flexible if future input structures change.
 
-This approach is good when the thesis goal is formula reproduction.
+This approach is now implemented in the notebook as its own complete method. The notebook checks whether the Python formula reproduces the consultant workbook's GM output, then uses the same formula for LK hindcast and future scenario prediction.
 
 ### Approach 2: Machine-Learning Surrogate Model
 
-This is the approach used in the notebook.
+This is the second approach used in the notebook.
 
 The idea is:
 
@@ -289,6 +298,7 @@ This is included in the notebook.
 The notebook uses a hybrid of:
 
 - Consultant-model reproduction
+- Deterministic consultant-formula modelling
 - Random Forest surrogate modelling
 - Sequential recurrence forecasting
 - Monte Carlo uncertainty simulation
@@ -303,9 +313,20 @@ The notebook reads the `Process water` sheet and extracts rows for:
 - Cl
 - Ni
 
-It uses the consultant's calculated rows from 2014 to 2025 for training.
+It uses the consultant's calculated rows from 2014 to 2025 as the source data. The deterministic formula section uses these rows to check whether the Python recurrence reproduces the workbook, while the ML section uses them for training.
 
-### Step 2: Build Features
+### Step 2: Implement the Deterministic Consultant Formula
+
+The notebook directly implements the consultant recurrence:
+
+1. Calculate contaminant load from ore leaching and water sources.
+2. Divide by the effective water volume.
+3. Mix that incoming concentration with the previous stored concentration.
+4. Feed the new concentration into the next row.
+
+This gives a complete non-ML method. It is useful because it is transparent and close to the consultant's original Excel approach.
+
+### Step 3: Build Features for ML
 
 The model uses features such as:
 
@@ -323,7 +344,7 @@ The model uses features such as:
 
 The previous concentration is especially important because the original model is recurrent.
 
-### Step 3: Train Separate Models Per Parameter
+### Step 4: Train Separate ML Models Per Parameter
 
 The notebook trains one model per contaminant.
 
@@ -335,7 +356,7 @@ This is important because the contaminants have very different scales. For examp
 
 Training separately avoids one parameter dominating another.
 
-### Step 4: Use Random Forest
+### Step 5: Use Random Forest
 
 Random Forest was selected because:
 
@@ -346,7 +367,7 @@ Random Forest was selected because:
 
 The notebook still uses scaling and imputation inside each parameter model.
 
-### Step 5: Validate Using Cross-Validation
+### Step 6: Validate the ML Surrogate Using Cross-Validation
 
 The notebook checks whether the Random Forest can reproduce the consultant's calculated values.
 
@@ -366,7 +387,7 @@ Interpretation:
 
 Ni may be more difficult because the half-year pattern can dominate the signal.
 
-### Step 6: Forecast Sequentially
+### Step 7: Forecast Sequentially
 
 The forecast is not done row-by-row independently.
 
@@ -561,7 +582,23 @@ Expected result:
 
 The displayed table shows the selected ore mix scenario and input mode.
 
-### 11.5 Model Training and Diagnostics
+### 11.5 Deterministic Consultant Formula Method
+
+This section runs the direct formula-based approach.
+
+Expected result:
+
+- A reproduction metrics table comparing the Python formula against the consultant workbook's GM output.
+- A deterministic formula forecast table with P10/P50/P90 uncertainty values.
+- A deterministic formula forecast figure.
+
+Important interpretation:
+
+> This is the closest Python version of the consultant's own method. It is separate from machine learning.
+
+For the workbook-reproduction check, the code uses the workbook's own `AF` storage-state column so it can verify the Excel calculation accurately. For hindcast and future forecast, the same formula is then run sequentially, meaning each predicted concentration becomes the next storage state.
+
+### 11.6 Model Training and Diagnostics
 
 This section trains the Random Forest models.
 
@@ -594,7 +631,7 @@ CV R2 < 0.5
 
 If a parameter has weak R2, interpret its forecast carefully.
 
-### 11.6 Sequential Forecast and Monte Carlo
+### 11.7 Sequential Forecast and Monte Carlo
 
 This section predicts 2026-2030.
 
@@ -612,7 +649,7 @@ Important columns:
 | `p90` | Upper uncertainty estimate |
 | `input_mode` | Whether forecast used real ore inputs or proxy sensitivity inputs |
 
-### 11.7 Proxy Ore-Combination Sensitivity
+### 11.8 Proxy Ore-Combination Sensitivity
 
 This section tests different GK, GL, and LK proxy mixes. It includes fixed LK examples such as 50/50, 40/60, and 60/40 Leveaniemi-Kiruna.
 
@@ -624,7 +661,7 @@ Use this to answer:
 
 > How much does the prediction change if the future ore mix is more GK-heavy or more GL-heavy?
 
-### 11.8 Thesis Figure
+### 11.9 Thesis Figure
 
 This section creates a four-panel figure.
 
@@ -739,7 +776,7 @@ Answer:
 
 Answer:
 
-> The consultant formulas are embedded across a complex Excel workbook. A Random Forest surrogate allows us to learn the relationship between inputs and outputs without manually rewriting every formula, while still preserving the important recurrence structure.
+> The deterministic formula method gives a transparent reproduction of the consultant's approach. The machine-learning method is added as a second method to test whether a data-driven surrogate can learn the same workbook behaviour and support scenario comparison. Presenting both gives the thesis a stronger comparison.
 
 ### Question 3: Why do we need future ore input values?
 
@@ -787,7 +824,7 @@ Answer:
 
 Answer:
 
-> Yes, if framed correctly. It is suitable as a consultant-model surrogate and scenario-forecasting workflow. It should not be described as a confirmed operational forecast unless confirmed future ore inputs and monitoring validation are included.
+> Yes, if framed correctly. It now contains two complete methods: a deterministic consultant-formula method and a machine-learning surrogate method. It should not be described as a confirmed operational forecast unless confirmed future ore inputs and monitoring validation are included.
 
 ## 14. How to Get Better Results
 
@@ -817,11 +854,11 @@ The monitoring data should be aggregated to match the model time scale, for exam
 - Summer/winter median
 - Half-year average
 
-### 14.3 Rebuild Key Mass-Balance Formula Directly
+### 14.3 Improve the Direct Formula Inputs
 
-For maximum transparency, the most important Excel recurrence formulas could be translated directly into Python.
+The key mass-balance recurrence has now been translated directly into Python. The next improvement is to replace proxy future inputs with confirmed operational values.
 
-This would allow comparison between:
+This allows comparison between:
 
 - Excel formula result
 - Python formula result
@@ -884,7 +921,7 @@ This helps justify why Random Forest was selected.
 
 A safe and accurate way to describe the work is:
 
-> This study developed a machine-learning surrogate of the consultant's process-water mass-balance model for Leveaniemi. The model was trained on consultant-calculated rows from 2014-2025 and used previous storage concentration, production volume, leaching inputs, pit-pump water, and water-balance variables as predictors. Forecasts for 2026-2030 were generated sequentially so that each predicted concentration was fed into the next row as the storage state. Uncertainty was quantified using Monte Carlo perturbation of leaching inputs. Where confirmed future ore-plan inputs were unavailable, GK/GL forecasts and the inferred LK forecast were treated as proxy scenario and sensitivity results rather than confirmed operational predictions.
+> This study implemented two versions of the consultant's process-water mass-balance model for Leveaniemi. First, the consultant's deterministic recurrence was translated into Python and checked against the original workbook output. Second, a Random Forest surrogate was trained on consultant-calculated rows to learn the relationship between production, ore leaching, water-balance inputs, previous storage concentration, and modelled concentration. Both methods were run sequentially so each predicted concentration became the next storage state. Uncertainty was quantified using Monte Carlo perturbation of leaching inputs. Where confirmed future ore-plan inputs were unavailable, GK/GL forecasts and the inferred LK forecast were treated as proxy scenario and sensitivity results rather than confirmed operational predictions.
 
 ## 16. Practical Checklist Before Presenting Results
 

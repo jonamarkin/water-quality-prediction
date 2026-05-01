@@ -470,7 +470,26 @@ The parameter-specific part is the `ore_load` calculation.
 
 ## 12. How This Relates to the Current Python Notebook
 
-The current notebook does not manually rewrite every Excel formula as the final prediction engine. Instead, it trains a Random Forest surrogate to learn the relationship between:
+The current notebook now uses the consultant logic in two separate ways.
+
+### 12.1 Direct Deterministic Formula Method
+
+The notebook implements the mass-balance recurrence directly in Python. This is the closest coded version of the consultant's original approach. It uses:
+
+- the parameter-specific ore-load conversion
+- the water-source load terms
+- the effective-volume denominator
+- storage volume
+- previous storage concentration
+- sequential state feedback
+
+The notebook also checks the Python formula against the consultant workbook's GM output column. This check is important because it shows whether the extracted mathematical formula reproduces the original Excel calculation.
+
+For this workbook-reproduction check, the Python code uses the workbook's own `AF` storage-state value for each formula row. This matters because some blocks, especially chloride, contain workbook-specific state references that are not always a simple one-row shift. For future prediction, the notebook still runs the recurrence sequentially by feeding each predicted concentration forward.
+
+### 12.2 Machine-Learning Surrogate Method
+
+The notebook also trains a Random Forest surrogate to learn the relationship between:
 
 - production/leaching inputs
 - pit-pump water
@@ -482,6 +501,11 @@ The current notebook does not manually rewrite every Excel formula as the final 
 The reason this works is that the consultant model is deterministic and repeated across rows. If the machine-learning model has good cross-validated `R2`, it means the model has learned the consultant's recurrence behaviour well.
 
 The notebook also preserves the recurrence idea by feeding each predicted concentration forward as the next period's storage concentration.
+
+Together, these provide two presentable methods:
+
+1. A deterministic consultant-formula method.
+2. A machine-learning surrogate method.
 
 ## 13. Thesis-Ready Explanation
 
