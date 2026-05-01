@@ -28,7 +28,7 @@ The most important thing to understand is this:
 
 > The deterministic formula and machine-learning model can both reproduce the consultant's calculation pattern, but both still need assumptions about future ore production and leaching. If confirmed future ore inputs are unavailable, the output should be interpreted as scenario-based or sensitivity-based prediction, not as a confirmed operational forecast.
 
-The only data treated as actual observed monitoring data is the 2020-2025 data in `parameters_used.xlsx`. Pre-2020 rows in the consultant workbook are not treated as observations; they are consultant model/formula rows used only to reconstruct or learn the consultant recurrence and to seed sequential predictions.
+The only data treated as actual observed monitoring data is the 2020-2025 monitoring data in `parameters_used2.xlsx`. Pre-2020 rows in the consultant workbook are not treated as observations; they are consultant model/formula rows used only to reconstruct or learn the consultant recurrence and to seed sequential predictions.
 
 ## 2. Files in This Project
 
@@ -38,7 +38,8 @@ The current project contains:
 |---|---|
 | `code.ipynb` | Main Jupyter notebook. It is ordered so Method 1, the deterministic consultant-formula approach, runs and exports first. Method 2, the ML surrogate, is optional and comes later. |
 | `Leveaniemi_data.xlsx` | Input Excel workbook containing the consultant's original process-water model and supporting sheets. |
-| `parameters_used.xlsx` | New validation workbook containing 2020-2025 observed/seasonal data, LK mix ratios, production references, and supporting parameters. |
+| `parameters_used2.xlsx` | Preferred validation workbook containing clearer 2020-2025 measured inputs: water flows, LK ore mixes, Leveaniemi and Kiruna leaching rates, production data, Gruvberget water concentrations, SEP83/SP27 Leveaniemi pit-water concentrations, and observed monitoring data. |
+| `parameters_used.xlsx` | Older validation workbook kept as a fallback if `parameters_used2.xlsx` is not available. |
 | `requirements.txt` | Python packages needed to run the notebook. |
 | `PROJECT_DOCUMENTATION.md` | This documentation file. |
 | `CONSULTANT_MATHEMATICAL_MODEL.md` | Detailed extraction of the consultant's original mass-balance recurrence and Excel formula logic. |
@@ -49,7 +50,13 @@ The notebook expects the main Excel workbook to be named:
 Leveaniemi_data.xlsx
 ```
 
-For the 2020-2025 validation section, it also expects:
+For the 2020-2025 validation section, it first looks for:
+
+```text
+parameters_used2.xlsx
+```
+
+If that file is unavailable, it falls back to:
 
 ```text
 parameters_used.xlsx
@@ -615,19 +622,32 @@ Important interpretation:
 
 For the workbook-reproduction check, the code uses the workbook's own `AF` storage-state column so it can verify the Excel calculation accurately. For hindcast and future forecast, the same formula is then run sequentially, meaning each predicted concentration becomes the next storage state.
 
-### 11.6 2020-2025 Actual Data and LK Schedule
+### 11.6 2020-2025 Actual Data and Measured Hindcast Inputs
 
-This section loads `parameters_used.xlsx`.
+This section loads `parameters_used2.xlsx` if present, otherwise it falls back to `parameters_used.xlsx`.
 
 Expected result:
 
 - A table of the LK mix schedule for 2020-2025.
+- A table of measured annual flows from `Mm3 year`.
+- A table of measured/input LK ore values built from production, ore mix, and Leveaniemi/Kiruna leaching rates.
+- Tables of Leveaniemi pit-water concentrations from `SEP83 (SP27)` and Gruvberget water concentrations from `GRUVBERGET WATER CONC.`.
 - A table of observed concentrations from the `DECIMAL DATE` sheet.
 - A production reference table.
 
 Important interpretation:
 
-> Only 2020-2025 from `parameters_used.xlsx` is treated as actual observed monitoring data. Pre-2020 consultant workbook rows are not actual observations.
+> Only 2020-2025 from the parameter workbook is treated as actual observed monitoring data. Pre-2020 consultant workbook rows are not actual observations.
+
+For the 2020-2025 hindcast, the notebook now uses the measured/input values she identified:
+
+- flows from 2020-2025
+- Leveaniemi-Kiruna ore mixes
+- Leveaniemi and Kiruna leaching rates
+- production data
+- Gruvberget water concentrations
+- SEP83/SP27 Leveaniemi pit-water concentrations
+- `DECIMAL DATE` current monitoring data for comparison
 
 ### 11.7 Method 1 Hindcast Validation and Export
 
@@ -637,7 +657,7 @@ Expected result:
 
 - A table of error metrics comparing formula predictions with observed 2020-2025 data.
 - A validation chart where the model prediction and actual observed data are shown as separate lines.
-- A Method 1 Excel workbook.
+- A Method 1 Excel workbook containing both the results and the measured-input tables used for validation.
 
 The Method 1 workbook is saved as:
 

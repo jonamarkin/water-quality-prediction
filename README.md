@@ -23,7 +23,8 @@ Where confirmed future ore inputs are unavailable, GK/GL/LK forecasts should be 
 |---|---|
 | `code.ipynb` | Main notebook. It is split into Method 1, deterministic consultant formula, and optional Method 2, ML surrogate. Method 1 can be run and exported without running any ML cells. |
 | `Leveaniemi_data.xlsx` | Input workbook containing the consultant's original process-water model. |
-| `parameters_used.xlsx` | New workbook containing 2020-2025 observed/seasonal data, LK ore-mix ratios, production references, and validation inputs. |
+| `parameters_used2.xlsx` | Preferred validation workbook containing the clearer 2020-2025 measured inputs: flows, LK ore mixes, Leveaniemi/Kiruna leaching rates, production, Gruvberget water concentrations, SEP83/SP27 Leveaniemi pit-water concentrations, and observed monitoring data. |
+| `parameters_used.xlsx` | Older validation workbook kept as a fallback if `parameters_used2.xlsx` is not present. |
 | `PROJECT_DOCUMENTATION.md` | Detailed explanation of the dataset, modelling choices, assumptions, results, and thesis interpretation. |
 | `CONSULTANT_MATHEMATICAL_MODEL.md` | Extracted explanation of the consultant's original mass-balance recurrence and Excel formulas. |
 | `requirements.txt` | Python dependencies needed to run the notebook. |
@@ -48,7 +49,7 @@ If you also want the optional ML method, install:
 %pip install scikit-learn
 ```
 
-Then upload `Leveaniemi_data.xlsx` and `parameters_used.xlsx` to the Colab runtime or place them in Google Drive.
+Then upload `Leveaniemi_data.xlsx` and `parameters_used2.xlsx` to the Colab runtime or place them in Google Drive. The notebook can still fall back to `parameters_used.xlsx` if the newer file is unavailable.
 
 ## How to Run
 
@@ -66,10 +67,11 @@ Method 1 will:
 2. Extract all modelled contaminant blocks from the consultant workbook.
 3. Run the deterministic consultant-formula method and check that it reproduces the workbook's GM output.
 4. Run a deterministic 2026-2030 forecast.
-5. Load `parameters_used.xlsx`.
-6. Run a 2020-2025 LK hindcast validation against actual observed data.
-7. Create Method 1 forecast and validation figures.
-8. Export the Method 1 workbook.
+5. Load `parameters_used2.xlsx`.
+6. Use measured 2020-2025 flows, LK ore mix, production, leaching rates, Gruvberget concentrations, and SEP83/SP27 Leveaniemi pit-water concentrations for the LK hindcast.
+7. Run a 2020-2025 LK hindcast validation against actual observed monitoring data.
+8. Create Method 1 forecast and validation figures.
+9. Export the Method 1 workbook.
 
 The optional Method 2 section then:
 
@@ -93,7 +95,7 @@ Expected files:
 |---|---|
 | `leveaniemi_consultant_formula_forecast_bands.png` | Multi-panel forecast plot from the direct deterministic consultant formula. |
 | `leveaniemi_hindcast_validation_consultant_formula_2020_2025.png` | Multi-panel plot comparing deterministic consultant-formula LK hindcast predictions with observed seasonal concentrations. |
-| `leveaniemi_method1_consultant_formula_outputs.xlsx` | Complete Method 1 workbook with formula reproduction checks, forecast values, observed 2020-2025 data, formula hindcast values, and error metrics. |
+| `leveaniemi_method1_consultant_formula_outputs.xlsx` | Complete Method 1 workbook with formula reproduction checks, forecast values, measured 2020-2025 input sheets, observed data, formula hindcast values, and error metrics. |
 | `leveaniemi_forecast_bands.png` | Optional Method 2 multi-panel plot with historical model values and ML forecast uncertainty bands. |
 | `leveaniemi_method2_ml_outputs.xlsx` | Optional Method 2 workbook containing ML diagnostics, ML forecasts, sensitivity results, formula forecast references, and input notes. |
 | `leveaniemi_hindcast_validation_ml_2020_2025.png` | Multi-panel plot comparing ML LK hindcast predictions with observed seasonal concentrations. |
@@ -103,7 +105,7 @@ Expected files:
 
 The deterministic formula reproduces the consultant workbook logic directly. The machine-learning model learns that same logic as a surrogate. Neither method automatically proves that the consultant model matches real monitoring data; that is why the 2020-2025 hindcast validation section is included.
 
-Only the 2020-2025 data from `parameters_used.xlsx` is treated as actual observed monitoring data. Rows before 2020 in the consultant workbook are model/formula rows, not actual observations; they are used only to reconstruct or learn the consultant recurrence and to seed sequential predictions.
+Only the 2020-2025 monitoring data from `parameters_used2.xlsx` is treated as actual observed data. Rows before 2020 in the consultant workbook are model/formula rows, not actual observations; they are used only to reconstruct or learn the consultant recurrence and to seed sequential predictions.
 
 For final operational prediction, confirmed future ore inputs are needed, especially:
 
