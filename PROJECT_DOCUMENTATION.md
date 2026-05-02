@@ -40,6 +40,7 @@ The current project contains:
 | `Leveaniemi_data.xlsx` | Input Excel workbook containing the consultant's original process-water model and supporting sheets. |
 | `parameters_used2.xlsx` | Preferred validation workbook containing clearer 2020-2025 measured inputs: water flows, LK ore mixes, Leveaniemi and Kiruna leaching rates, production data, Gruvberget water concentrations, SEP83/SP27 Leveaniemi pit-water concentrations, and observed monitoring data. |
 | `parameters_used.xlsx` | Older validation workbook kept as a fallback if `parameters_used2.xlsx` is not available. |
+| `agnes_predictions.xlsx` | Optional manual reconstruction workbook from Agnes. The notebook can extract its `Process water` outputs and compare them with the same observed 2020-2025 data. |
 | `requirements.txt` | Python packages needed to run the notebook. |
 | `PROJECT_DOCUMENTATION.md` | This documentation file. |
 | `CONSULTANT_MATHEMATICAL_MODEL.md` | Detailed extraction of the consultant's original mass-balance recurrence and Excel formula logic. |
@@ -61,6 +62,14 @@ If that file is unavailable, it falls back to:
 ```text
 parameters_used.xlsx
 ```
+
+If available, the notebook also looks for:
+
+```text
+agnes_predictions.xlsx
+```
+
+This file is not treated as ground truth. It is used as a diagnostic benchmark for Agnes's manual reconstruction.
 
 If running in Google Colab, both files must be uploaded into the Colab runtime or placed in Google Drive.
 
@@ -667,7 +676,21 @@ outputs/leveaniemi_method1_consultant_formula_outputs.xlsx
 
 This is the point where you can stop if you do not want to run machine learning.
 
-### 11.8 Optional Method 2: Model Training and Diagnostics
+### 11.8 Optional Agnes Manual Reconstruction Comparison
+
+If `agnes_predictions.xlsx` is present, the notebook extracts Agnes's manual `Process water` predictions and compares them against the same observed 2020-2025 monitoring data.
+
+Expected result:
+
+- A metrics table for Agnes's manual reconstruction.
+- A plot comparing Agnes's prediction line with actual observed data.
+- Extra workbook sheets named `Agnes_predictions`, `Agnes_hindcast`, `Agnes_comparison`, and `Agnes_metrics`.
+
+Important interpretation:
+
+> Agnes's workbook is used as a diagnostic benchmark. If it is closer than the notebook for a parameter, inspect the input assumptions she changed. If it is worse, do not copy that part into the final method.
+
+### 11.9 Optional Method 2: Model Training and Diagnostics
 
 This section trains the Random Forest models.
 
@@ -700,7 +723,7 @@ CV R2 < 0.5
 
 If a parameter has weak R2, interpret its forecast carefully.
 
-### 11.9 Optional Method 2: Sequential Forecast and Monte Carlo
+### 11.10 Optional Method 2: Sequential Forecast and Monte Carlo
 
 This section predicts 2026-2030.
 
@@ -718,7 +741,7 @@ Important columns:
 | `p90` | Upper uncertainty estimate |
 | `input_mode` | Whether forecast used real ore inputs or proxy sensitivity inputs |
 
-### 11.10 Optional Method 2: Proxy Ore-Combination Sensitivity
+### 11.11 Optional Method 2: Proxy Ore-Combination Sensitivity
 
 This section tests different GK, GL, and LK proxy mixes. It includes fixed LK examples such as 50/50, 40/60, and 60/40 Leveaniemi-Kiruna.
 
@@ -730,7 +753,7 @@ Use this to answer:
 
 > How much does the prediction change if the future ore mix is more GK-heavy or more GL-heavy?
 
-### 11.11 Optional Method 2: ML Forecast Figure
+### 11.12 Optional Method 2: ML Forecast Figure
 
 This section creates a multi-panel figure.
 
@@ -748,7 +771,7 @@ The figure is saved as:
 outputs/leveaniemi_forecast_bands.png
 ```
 
-### 11.12 Optional Method 2: ML Forecast Export
+### 11.13 Optional Method 2: ML Forecast Export
 
 This section writes the output tables to Excel.
 
@@ -771,13 +794,13 @@ Sheets include:
 | `Element_limits` | Optional element limits used for threshold comparison |
 | `Forecast_input_note` | Important note on whether forecast inputs are proxy or user-supplied |
 
-### 11.13 Optional Monitoring Data
+### 11.14 Optional Monitoring Data
 
 This section is only a scaffold.
 
 It can later be used to compare model forecasts with daily monitoring data.
 
-### 11.14 Optional Method 2: ML Hindcast Validation
+### 11.15 Optional Method 2: ML Hindcast Validation
 
 This section repeats the 2020-2025 validation with the Random Forest surrogate.
 

@@ -25,6 +25,7 @@ Where confirmed future ore inputs are unavailable, GK/GL/LK forecasts should be 
 | `Leveaniemi_data.xlsx` | Input workbook containing the consultant's original process-water model. |
 | `parameters_used2.xlsx` | Preferred validation workbook containing the clearer 2020-2025 measured inputs: flows, LK ore mixes, Leveaniemi/Kiruna leaching rates, production, Gruvberget water concentrations, SEP83/SP27 Leveaniemi pit-water concentrations, and observed monitoring data. |
 | `parameters_used.xlsx` | Older validation workbook kept as a fallback if `parameters_used2.xlsx` is not present. |
+| `agnes_predictions.xlsx` | Optional manual reconstruction workbook from Agnes. The notebook can compare her predictions against observed data as a diagnostic benchmark. |
 | `PROJECT_DOCUMENTATION.md` | Detailed explanation of the dataset, modelling choices, assumptions, results, and thesis interpretation. |
 | `CONSULTANT_MATHEMATICAL_MODEL.md` | Extracted explanation of the consultant's original mass-balance recurrence and Excel formulas. |
 | `requirements.txt` | Python dependencies needed to run the notebook. |
@@ -70,8 +71,9 @@ Method 1 will:
 5. Load `parameters_used2.xlsx`.
 6. Use measured 2020-2025 flows, LK ore mix, production, leaching rates, Gruvberget concentrations, and SEP83/SP27 Leveaniemi pit-water concentrations for the LK hindcast.
 7. Run a 2020-2025 LK hindcast validation against actual observed monitoring data.
-8. Create Method 1 forecast and validation figures.
-9. Export the Method 1 workbook.
+8. If `agnes_predictions.xlsx` is available, compare Agnes's manual reconstruction with the same observed data.
+9. Create Method 1 forecast and validation figures.
+10. Export the Method 1 workbook.
 
 The optional Method 2 section then:
 
@@ -95,7 +97,8 @@ Expected files:
 |---|---|
 | `leveaniemi_consultant_formula_forecast_bands.png` | Multi-panel forecast plot from the direct deterministic consultant formula. |
 | `leveaniemi_hindcast_validation_consultant_formula_2020_2025.png` | Multi-panel plot comparing deterministic consultant-formula LK hindcast predictions with observed seasonal concentrations. |
-| `leveaniemi_method1_consultant_formula_outputs.xlsx` | Complete Method 1 workbook with formula reproduction checks, forecast values, measured 2020-2025 input sheets, observed data, formula hindcast values, and error metrics. |
+| `leveaniemi_hindcast_validation_agnes_manual_2020_2025.png` | Optional plot comparing Agnes's manual reconstruction with observed seasonal concentrations. |
+| `leveaniemi_method1_consultant_formula_outputs.xlsx` | Complete Method 1 workbook with formula reproduction checks, forecast values, measured 2020-2025 input sheets, observed data, formula hindcast values, optional Agnes comparison sheets, and error metrics. |
 | `leveaniemi_forecast_bands.png` | Optional Method 2 multi-panel plot with historical model values and ML forecast uncertainty bands. |
 | `leveaniemi_method2_ml_outputs.xlsx` | Optional Method 2 workbook containing ML diagnostics, ML forecasts, sensitivity results, formula forecast references, and input notes. |
 | `leveaniemi_hindcast_validation_ml_2020_2025.png` | Multi-panel plot comparing ML LK hindcast predictions with observed seasonal concentrations. |
